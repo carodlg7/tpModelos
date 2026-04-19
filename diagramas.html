@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagramas de Flujo - Simulación de Colas</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .mermaid {
+            display: flex;
+            justify-content: center;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+        }
+        .tab-active {
+            border-bottom: 3px solid #4f46e5;
+            color: #4f46e5;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans">
+
+<div class="max-w-5xl mx-auto py-10 px-6">
+    <header class="mb-10 text-center">
+        <h1 class="text-3xl font-extrabold text-slate-900 mb-2">Lógica de Simulación de Eventos</h1>
+        <p class="text-slate-500">Diagramas de flujo detallados para los 5 problemas de la guía.</p>
+    </header>
+
+    <!-- Pestañas -->
+    <div class="flex border-b border-slate-200 mb-8 overflow-x-auto whitespace-nowrap bg-white rounded-t-xl shadow-sm">
+        <button onclick="showTab(1)" id="btn-1" class="tab-btn px-6 py-4 text-sm tab-active">Problema 1</button>
+        <button onclick="showTab(2)" id="btn-2" class="tab-btn px-6 py-4 text-sm text-slate-500">Problema 2</button>
+        <button onclick="showTab(3)" id="btn-3" class="tab-btn px-6 py-4 text-sm text-slate-500">Problema 3</button>
+        <button onclick="showTab(4)" id="btn-4" class="tab-btn px-6 py-4 text-sm text-slate-500">Problema 4</button>
+        <button onclick="showTab(5)" id="btn-5" class="tab-btn px-6 py-4 text-sm text-slate-500">Problema 5</button>
+    </div>
+
+    <!-- Contenido de Pestañas -->
+    <div id="tab-content" class="bg-white p-8 rounded-b-xl shadow-lg border border-slate-100">
+        
+        <!-- P1 -->
+        <div id="content-1" class="tab-pane">
+            <h2 class="text-xl font-bold mb-4 text-indigo-700">P1: Sistema M/M/1 Estándar</h2>
+            <div class="mermaid">
+            graph TD
+                Start([Inicio]) --> Init[Reloj=0, Cola=0, PS=Libre]
+                Init --> FEL[Programar Primera Llegada]
+                FEL --> Loop{Extraer Próximo Evento}
+                
+                Loop -- LLEGADA --> NextArr[Programar Siguiente Llegada]
+                NextArr --> CheckPS{¿PS Libre?}
+                CheckPS -- Si --> Occupy[PS=1, Programar Fin Servicio]
+                CheckPS -- No --> Enqueue[Cola++]
+                
+                Loop -- FIN_SERVICIO --> FreePS[PS=0]
+                FreePS --> CheckQ{¿Cola > 0?}
+                CheckQ -- Si --> Dequeue[Cola--, PS=1, Programar Fin Servicio]
+                CheckQ -- No --> Loop
+                
+                Occupy --> Loop
+                Enqueue --> Loop
+                Dequeue --> Loop
+            </div>
+        </div>
+
+        <!-- P2 -->
+        <div id="content-2" class="tab-pane hidden">
+            <h2 class="text-xl font-bold mb-4 text-indigo-700">P2: Servidor con Descansos y Pausa</h2>
+            <div class="mermaid">
+            graph TD
+                Loop{Evento} -- SALIDA_SRV --> SrvOut[Servidor=Ausente]
+                SrvOut --> CheckBusy{¿PS Ocupado?}
+                CheckBusy -- Si --> Pause[Calcular Tiempo Restante<br/>Eliminar FIN_SERVICIO de FEL]
+                CheckBusy -- No --> Loop
+                
+                Loop -- LLEGADA_SRV --> SrvIn[Servidor=Presente]
+                SrvIn --> CheckRem{¿Hay Remanente?}
+                CheckRem -- Si --> Resume[Programar FIN_SERVICIO<br/>con Tiempo Restante]
+                CheckRem -- No --> CheckWait{¿Cola > 0?}
+                CheckWait -- Si --> StartS[Atender Siguiente]
+                
+                Loop -- FIN_SERVICIO --> Done[PS=Libre, Remanente=0]
+                Done --> CheckNext{¿Servidor Pres. Y Cola > 0?}
+                CheckNext -- Si --> Next[Atender Siguiente]
+            </div>
+        </div>
+
+        <!-- P3 -->
+        <div id="content-3" class="tab-pane hidden">
+            <h2 class="text-xl font-bold mb-4 text-indigo-700">P3: Abandono de Cola (Impaciencia)</h2>
+            <div class="mermaid">
+            graph TD
+                Loop{Evento} -- LLEGADA --> Busy{¿PS Ocupado?}
+                Busy -- Si --> Wait[Cola++, Guardar Hora Arribo<br/>Programar ABANDONO en T+Limite]
+                Busy -- No --> Serve[Atender]
+                
+                Loop -- FIN_SERVICIO --> NextInQ[Tomar de Cola]
+                NextInQ --> CancelAb[Eliminar ABANDONO de FEL<br/>para ese cliente]
+                
+                Loop -- ABANDONO --> CheckInQ{¿Cliente sigue en cola?}
+                CheckInQ -- Si --> Leave[Cola-- / Sale del Sistema]
+                CheckInQ -- No --> Ignore[Ignorar]
+            </div>
+        </div>
+
+        <!-- P4 -->
+        <div id="content-4" class="tab-pane hidden">
+            <h2 class="text-xl font-bold mb-4 text-indigo-700">P4: Prioridades (A sobre B)</h2>
+            <div class="mermaid">
+            graph TD
+                Loop{Evento} -- LLEGADA_A --> BusyA{¿PS Libre?}
+                BusyA -- Si --> ServeA[PS=1, Programar FIN_SERVICIO]
+                BusyA -- No --> EnqA[Cola A++]
+                
+                Loop -- LLEGADA_B --> BusyB{¿PS Libre?}
+                BusyB -- Si --> ServeB[PS=1, Programar FIN_SERVICIO]
+                BusyB -- No --> EnqB[Cola B++]
+                
+                Loop -- FIN_SERVICIO --> CheckA{¿Cola A > 0?}
+                CheckA -- Si --> TakeA[Cola A--, PS=1, Programar FIN_SERVICIO]
+                CheckA -- No --> CheckB{¿Cola B > 0?}
+                CheckB -- Si --> TakeB[Cola B--, PS=1, Programar FIN_SERVICIO]
+                CheckB -- No --> Free[PS=0]
+            </div>
+        </div>
+
+        <!-- P5 -->
+        <div id="content-5" class="tab-pane hidden">
+            <h2 class="text-xl font-bold mb-4 text-indigo-700">P5: Zona de Seguridad (Traslado)</h2>
+            <div class="mermaid">
+            graph TD
+                Loop{Evento} -- LLEGADA --> CheckSafe{¿Zona Libre y PS Libre?}
+                CheckSafe -- Si --> Move[Zona=Ocupada, Programar LLEGADA_PS]
+                CheckSafe -- No --> Enq[Cola++]
+                
+                Loop -- LLEGADA_PS --> AtPS[Zona=Libre, PS=Ocupada, Programar FIN_SERVICIO]
+                
+                Loop -- FIN_SERVICIO --> FreePS[PS=Libre]
+                FreePS --> CheckQ{¿Cola > 0?}
+                CheckQ -- Si --> NextMove[Cola--, Zona=Ocupada, Programar LLEGADA_PS]
+                CheckQ -- No --> Loop
+            </div>
+        </div>
+
+    </div>
+
+    <footer class="mt-8 text-sm text-slate-400 text-center">
+        Simbología: Los elipses son inicio/fin, los rectángulos son procesos y los rombos son decisiones.
+    </footer>
+</div>
+
+<script>
+    mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+
+    function showTab(num) {
+        // Ocultar todos
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
+        document.querySelectorAll('.tab-btn').forEach(b => {
+            b.classList.remove('tab-active');
+            b.classList.add('text-slate-500');
+        });
+
+        // Mostrar seleccionado
+        document.getElementById('content-' + num).classList.remove('hidden');
+        document.getElementById('btn-' + num).classList.add('tab-active');
+        document.getElementById('btn-' + num).classList.remove('text-slate-500');
+        
+        // Re-renderizar mermaid por si acaso
+        mermaid.init();
+    }
+</script>
+
+</body>
+</html>

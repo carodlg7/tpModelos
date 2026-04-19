@@ -1,0 +1,68 @@
+problema 1
+
+graph TD
+    Start((Inicio)) --> Init[Inicializar Hora=0, Cola=0, PS=Libre]
+    Init --> FEL[Programar Primera Llegada en FEL]
+    FEL --> Loop{¿Evento en FEL?}
+    Loop -- Si --> Event[Extraer Evento más próximo]
+    Event --> Type{Tipo de Evento}
+    
+    Type -- Llegada --> Arr[Programar Siguiente Llegada]
+    Arr --> Busy{¿PS Ocupado?}
+    Busy -- Si --> Q[Cola = Cola + 1]
+    Busy -- No --> StartS[PS = Ocupado, Programar Fin Servicio]
+    
+    Type -- Fin Servicio --> EndS[PS = Libre]
+    EndS --> QEmpty{¿Cola > 0?}
+    QEmpty -- Si --> Next[Cola = Cola - 1, PS = Ocupado, Programar Fin Servicio]
+    QEmpty -- No --> Loop
+    
+    Q --> Loop
+    StartS --> Loop
+    Next --> Loop
+    Loop -- No --> End((Fin))
+
+problema 2
+
+graph TD
+    Type -- Salida Servidor --> SOut[Presencia = 0, Programar Llegada Servidor]
+    Type -- Llegada Servidor --> SIn[Presencia = 1, Programar Salida Servidor]
+    SIn --> CheckQ{¿Cola > 0?}
+    CheckQ -- Si --> StartS[PS = Ocupado, Programar Fin Servicio]
+    
+    Type -- Fin Servicio --> Free[PS = Libre]
+    Free --> CheckS{¿Presencia == 1 Y Cola > 0?}
+    CheckS -- Si --> Next[Atender Siguiente]
+
+
+problema 3
+
+graph TD
+    Type -- Llegada --> Q3[Cola++, Guardar Hora Llegada, Programar Abandono en T+MáxWait]
+    Type -- Fin Servicio --> Serve[Tomar de Cola]
+    Serve --> Cancel[Cancelar Evento Abandono de ese Cliente]
+    Type -- Abandono --> Quit[¿Cliente sigue en cola? Si: Quitar de Cola]
+
+
+problema 4
+
+graph TD
+    Type -- Fin Servicio --> CheckA{¿Cola A > 0?}
+    CheckA -- Si --> TakeA[Atender de Cola A]
+    CheckA -- No --> CheckB{¿Cola B > 0?}
+    CheckB -- Si --> TakeB[Atender de Cola B]
+    CheckB -- No --> Free[PS = Libre]
+
+
+problema 5
+
+graph TD
+    Type -- Llegada --> FreeZ{¿PS Libre Y Zona Libre?}
+    FreeZ -- Si --> Move[Zona = Ocupada, Programar Llegada a PS]
+    FreeZ -- No --> Q[Cola++]
+    
+    Type -- Fin Servicio --> PSFree[PS = Libre, Zona = Libre]
+    PSFree --> NextQ{¿Cola > 0?}
+    NextQ -- Si --> Move
+    
+    Type -- Llegada a PS --> PSBusy[Zona = Libre, PS = Ocupado, Programar Fin Servicio]
